@@ -46,7 +46,8 @@ def load_tasks():
         'pending': [],
         'deleted': [],
         'waiting': [],
-        'completed': []
+        'completed': [],
+        'recurring': []
         }
 
     for task in json.loads(subprocess.check_output(['task', 'export'])):
