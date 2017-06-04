@@ -35,7 +35,7 @@ def add_task(desc, priority=''):
     if priority:
         priority = 'pri:' + priority
 
-    subprocess.check_output(['task', 'add', desc, '+tmpdev', priority])
+    subprocess.check_output(['task', 'add', desc, priority])
 
 
 def complete_task(uuid):
