@@ -4,6 +4,8 @@ import os
 import re
 import subprocess
 
+import click
+
 TODO_TXT = os.path.expanduser('~/Dropbox/todo/todo.txt')
 uid_re = re.compile('\[([0-9a-f]{8})\]')
 
@@ -50,7 +52,7 @@ def load_tasks():
         'recurring': []
         }
 
-    for task in json.loads(subprocess.check_output(['task', 'export'])):
+    for task in json.loads(subprocess.check_output(['task', 'export']).decode()):
         task_data['tasks'][short_id(task)] = task
         task_data[task['status']].append(task)
 
