@@ -5,7 +5,10 @@ import re
 import subprocess
 
 import click
+from tasklib import TaskWarrior
 
+
+tw = TaskWarrior(data_location='~/.task', create=False)
 TODO_TXT = os.path.expanduser('~/Dropbox/todo/todo.txt')
 uid_re = re.compile('\[([0-9a-f]{8})\]')
 
@@ -27,8 +30,8 @@ def load_todos():
     return new, deleted
 
 
-def short_id(task):
-    return task['uuid'][0:8]
+def short_id(uuid):
+    return uuid[0:8]
 
 
 def add_task(desc, priority=''):
@@ -38,33 +41,21 @@ def add_task(desc, priority=''):
     subprocess.check_output(['task', 'add', desc, priority])
 
 
-def complete_task(uuid):
-    subprocess.check_output(['task', 'done', uuid])
+def complete_task(short_id):
+    for t in tw.tasks.pending():
+        if t['uuid'].startswith(short_id):
+            t.done()
+            return True
+
+    return False
 
 
-def load_tasks():
-    task_data = {
-        'tasks': {},
-        'pending': [],
-        'deleted': [],
-        'waiting': [],
-        'completed': [],
-        'recurring': []
-        }
-
-    for task in json.loads(subprocess.check_output(['task', 'export']).decode()):
-        task_data['tasks'][short_id(task)] = task
-        task_data[task['status']].append(task)
-
-    return task_data
-
-
-def gen_todos(task_data):
-    pending = sorted(task_data['pending'], key=lambda x: x['urgency'], reverse=True)
+def gen_todos():
+    pending = sorted(tw.tasks.pending(), key=lambda x: x['urgency'], reverse=True)
 
     with open(TODO_TXT, 'w') as f:
         for p in pending:
-            print('{} [{}]'.format(p['description'], short_id(p)), file=f)
+            print('{} [{}]'.format(p['description'], short_id(p['uuid'])), file=f)
 
 
 def update_tasks(new, deleted):
@@ -74,19 +65,21 @@ def update_tasks(new, deleted):
     if len(new):
         print('Added {} new tasks'.format(len(new)))
 
+    deleted_cnt = 0
     for task in deleted:
         m = uid_re.search(task)
-        complete_task(m.groups()[0])
+        if complete_task(m.groups()[0]):
+            deleted_cnt +=1
 
-    if len(deleted):
-        print('Completed {} tasks'.format(len(deleted)))
+    if deleted_cnt:
+        print('Completed {} tasks'.format(deleted_cnt))
 
 
+@click.command()
 def main():
     new, deleted = load_todos()
     update_tasks(new, deleted)
-    task_data = load_tasks()
-    gen_todos(task_data)
+    gen_todos()
 
 
 if __name__ == '__main__':

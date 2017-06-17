@@ -3,8 +3,9 @@ from setuptools import setup
 setup(name='taskbridge',
       version='0.0.1',
       py_modules=['taskbridge'],
-      install_require=[
-          'Click'
+      install_requires=[
+          'Click',
+          'tasklib'
       ],
       entry_points={
           'console_scripts': [
