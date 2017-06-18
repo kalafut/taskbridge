@@ -4,6 +4,7 @@ import os
 import re
 import subprocess
 
+import attr
 import click
 from tasklib import TaskWarrior
 
@@ -12,13 +13,55 @@ tw = TaskWarrior(data_location='~/.task', create=False)
 TODO_TXT = os.path.expanduser('~/Dropbox/todo/todo.txt')
 uid_re = re.compile('\[([0-9a-f]{8})\]')
 
+@attr.s
+class Todo:
+    text = attr.ib()
+    priority = attr.ib(default='A')
+    done = attr.ib(default=False)
+    tags = attr.ib(attr.Factory(list))
+    contexts = attr.ib(attr.Factory(list))
+    uuid = attr.ib(default=None)
+    short_uuid = attr.ib(default=None)
+
+
+
+_context_regex = re.compile(r'(?:^|\s+)(@\S+)')
+_project_regex = re.compile(r'(?:^|\s+)(\+\S+)')
+_creation_date_regex = re.compile(r'^'
+                                  r'(?:x \d\d\d\d-\d\d-\d\d )?'
+                                  r'(?:\(\w\) )?'
+                                  r'(\d\d\d\d-\d\d-\d\d)\s*')
+_due_date_regex = re.compile(r'\s*due:(\d\d\d\d-\d\d-\d\d)\s*')
+_priority_regex = re.compile(r'.{0,13}\(([A-Z])\) ')
+_completed_regex = re.compile(r'^x (\d\d\d\d-\d\d-\d\d) ')
+
+
 def load_todos():
     new = []
     deleted = []
+    todos = []
 
     with open(TODO_TXT) as f:
         for line in f:
+            priority, uid = None, None
             line = line.strip()
+
+            done = line.startswith('x ')
+
+            match = _priority_regex.match(line)
+            if match:
+                priority = match.group(1)
+
+            match = uid_re.search(line)
+            if match:
+                uid = match.group(1)
+
+            if uid or not done:
+                todos.append(Todo(
+                        text='blah',
+                        priority=priority,
+                        short_uuid=uid,
+                        done=done))
 
             if uid_re.search(line):
                 if line.startswith('x '):
@@ -26,6 +69,7 @@ def load_todos():
             else:
                 if not line.startswith('x '):
                     new.append(line)
+    #print(todos)
 
     return new, deleted
 

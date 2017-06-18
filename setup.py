@@ -5,7 +5,8 @@ setup(name='taskbridge',
       py_modules=['taskbridge'],
       install_requires=[
           'Click',
-          'tasklib'
+          'tasklib',
+          'attrs'
       ],
       entry_points={
           'console_scripts': [
