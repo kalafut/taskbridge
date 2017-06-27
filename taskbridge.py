@@ -34,9 +34,13 @@ def short_id(uuid):
     return uuid[0:8]
 
 
-def add_task(desc, priority=''):
-    if priority:
-        priority = 'pri:' + priority
+def add_task(desc):
+    priority_match = re.match(r'\(([A-C])\) +', desc)
+    if priority_match:
+        priority = 'pri:' + {'A': 'H', 'B': 'M', 'C': 'L'}[priority_match.group(1)]
+        desc = desc[priority_match.span()[1]:]
+    else:
+        priority = ''
 
     subprocess.check_output(['task', 'add', desc, priority])
 
